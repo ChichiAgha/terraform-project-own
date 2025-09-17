@@ -17,7 +17,7 @@ variable "private_instance_count" {
 variable "private_ami" {
   description = "AMI for private EC2 instances"
   type        = string
-  default     = "ami-0c55b159cbfafe1f0"
+  default     = "ami-046c2381f11878233"
 }
 
 variable "private_instance_type" {

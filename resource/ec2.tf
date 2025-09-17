@@ -23,7 +23,7 @@ module "my_ec2" {
   private_subnet_cidr     = "10.0.2.0/24"
   dynamodb_table          = "terraform-locks"
   ec2_instance_type       = local.ec2_instance_type
-  ec2_ami_id              = "ami-0c55b159cbfafe1f0"
+  ec2_ami_id              = "ami-046c2381f11878233"
   public_instances        = var.public_instances
   private_instance_count  = var.private_instance_count
   private_ami             = var.private_ami
