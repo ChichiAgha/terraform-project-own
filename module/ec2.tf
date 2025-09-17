@@ -79,7 +79,6 @@ resource "aws_default_security_group" "main_vpc_default" {
     description = "No egress allowed"
   }
 }
-}
 
 # Public Subnet
 resource "aws_subnet" "public" {

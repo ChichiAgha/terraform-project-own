@@ -88,6 +88,12 @@ resource "aws_dynamodb_table" "tf_locks" {
   }
 }
 
+    server_side_encryption {
+      enabled     = true
+      kms_key_arn = aws_kms_key.dynamodb_table_key.arn
+    }
+  }
+
 # IAM role for Lambda
 /*resource "aws_iam_role" "lambda_ami_cleanup" {
   name = "lambda_ami_cleanup_role"
@@ -103,7 +109,21 @@ resource "aws_dynamodb_table" "tf_locks" {
   })
 }
 
-# IAM policy for Lambda to deregister AMI
+      resource "aws_s3_bucket_notification" "tf_state_events" {
+        bucket = aws_s3_bucket.tf_state.id
+        topic {
+          topic_arn = aws_sns_topic.s3_events.arn
+          events    = ["s3:ObjectCreated:*"]
+        }
+      }
+
+      resource "aws_s3_bucket_public_access_block" "tf_state_block" {
+        bucket                  = aws_s3_bucket.tf_state.id
+        block_public_acls       = true
+        block_public_policy     = true
+        ignore_public_acls      = true
+        restrict_public_buckets = true
+      }
 resource "aws_iam_role_policy" "lambda_ami_cleanup_policy" {
   name = "lambda_ami_cleanup_policy"
   role = aws_iam_role.lambda_ami_cleanup.id
