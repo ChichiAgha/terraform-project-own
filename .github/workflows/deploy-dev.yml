@@ -2,8 +2,7 @@ name: Terraform Dev Deploy
 on:
   push:
     branches:
-      - develop
-      
+      - develop    
 jobs:
   terraform:
     runs-on: ubuntu-latest
