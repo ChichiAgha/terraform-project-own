@@ -140,8 +140,8 @@ resource "aws_instance" "private" {
   tags = {
     Name = "private-${count.index + 1}"
   }
-  lifecycle {
-    prevent_destroy = true
-  }
+  #lifecycle {
+  #  prevent_destroy = true
+  #}
   depends_on = [aws_instance.public]
 }
