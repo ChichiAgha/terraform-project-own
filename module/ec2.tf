@@ -1,6 +1,6 @@
 ## EBS Volumes using for_each (demonstrates for_each on a different resource)
 resource "aws_ebs_volume" "extra" {
-  for_each = var.ebs_volumes
+  for_each          = var.ebs_volumes
   availability_zone = each.value.az
   size              = each.value.size
   tags = {
@@ -9,16 +9,16 @@ resource "aws_ebs_volume" "extra" {
 }
 
 
- provider "aws" {
+provider "aws" {
   region = var.region
- }
+}
 
 locals {
   ec2_names = ["web", "app"]
   ec2_matrix = flatten([
     for name in local.ec2_names : [
       for i in range(2) : {
-        name = name
+        name  = name
         index = i + 1
       }
     ]
@@ -114,11 +114,11 @@ data "aws_availability_zones" "available" {}
 # EC2 in Public Subnet
 ## Public EC2 instances using for_each (map/object for different configs)
 resource "aws_instance" "public" {
-  for_each      = var.public_instances
-  ami           = each.value.ami
-  instance_type = each.value.instance_type
-  subnet_id     = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+  for_each                    = var.public_instances
+  ami                         = each.value.ami
+  instance_type               = each.value.instance_type
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = true
   tags = {
     Name = each.value.name
@@ -131,11 +131,11 @@ resource "aws_instance" "public" {
 # EC2 in Private Subnet
 ## Private EC2 instances using count (identical resources)
 resource "aws_instance" "private" {
-  count         = var.private_instance_count
-  ami           = var.private_ami
-  instance_type = var.private_instance_type
-  subnet_id     = aws_subnet.private.id
-  vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+  count                       = var.private_instance_count
+  ami                         = var.private_ami
+  instance_type               = var.private_instance_type
+  subnet_id                   = aws_subnet.private.id
+  vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = false
   tags = {
     Name = "private-${count.index + 1}"

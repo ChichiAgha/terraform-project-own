@@ -24,9 +24,9 @@ resource "aws_dynamodb_table" "tf_locks" {
   hash_key     = "LockID"
 
   attribute {
-  name = "LockID"
-  type = "S"
-}
+    name = "LockID"
+    type = "S"
+  }
 }
 
 # IAM role for Lambda
