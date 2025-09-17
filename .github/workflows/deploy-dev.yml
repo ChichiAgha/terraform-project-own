@@ -19,8 +19,11 @@ jobs:
         run: terraform fmt -check -recursive
       - name: Terraform Lint
         uses: terraform-linters/setup-tflint@v1
+        with:
+          tflint_version: v0.59.1
       - name: Run TFLint
         run: tflint --init && tflint
+        working-directory: ./
       - name: Terraform Init
         run: terraform init
       - name: Terraform Validate
