@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - develop
-      - test
+      - testbranch
 permissions:
   contents: read
   issues: read
