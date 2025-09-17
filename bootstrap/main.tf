@@ -6,6 +6,61 @@ provider "aws" {
 # S3 bucket for Terraform state
 resource "aws_s3_bucket" "tf_state" {
   bucket = "my-terraform-state-bucket-12345-golder" # must be globally unique
+
+  # Enable server-side encryption with KMS
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        kms_master_key_id = aws_kms_key.s3_bucket_key.arn
+        sse_algorithm     = "aws:kms"
+      }
+    }
+  }
+
+  # Enable access logging
+  logging {
+    target_bucket = aws_s3_bucket.tf_state_logs.id
+    target_prefix = "log/"
+  }
+
+  # Enable event notifications (example: for object creation)
+  notification {
+    topic {
+      topic_arn = aws_sns_topic.s3_events.arn
+      events    = ["s3:ObjectCreated:*"]
+    }
+  }
+
+  # Enable public access block
+  public_access_block {
+    block_public_acls   = true
+    block_public_policy = true
+    ignore_public_acls  = true
+    restrict_public_buckets = true
+  }
+
+  # Enable lifecycle configuration (example: delete after 365 days)
+  lifecycle_rule {
+    id      = "expire-objects"
+    enabled = true
+    expiration {
+      days = 365
+    }
+  }
+
+  # Enable cross-region replication (example)
+  replication_configuration {
+    role = aws_iam_role.s3_replication.arn
+    rules {
+      id     = "replicate-all"
+      status = "Enabled"
+      destination {
+        bucket        = aws_s3_bucket.tf_state_replica.arn
+        storage_class = "STANDARD"
+      }
+      filter {}
+    }
+  }
 }
 
 # Enable versioning (recommended for safety)
@@ -26,6 +81,10 @@ resource "aws_dynamodb_table" "tf_locks" {
   attribute {
     name = "LockID"
     type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
   }
 }
 

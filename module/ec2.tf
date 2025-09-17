@@ -3,6 +3,8 @@ resource "aws_ebs_volume" "extra" {
   for_each          = var.ebs_volumes
   availability_zone = each.value.az
   size              = each.value.size
+  encrypted         = true
+  kms_key_id        = aws_kms_key.ebs_key.arn
   tags = {
     Name = each.value.name
   }
@@ -32,11 +34,58 @@ resource "aws_vpc" "main" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+  name = "/aws/vpc/flow-logs/main"
+  retention_in_days = 30
+}
+
+resource "aws_flow_log" "main_vpc_flow_log" {
+  log_group_name = aws_cloudwatch_log_group.vpc_flow_logs.name
+  vpc_id         = aws_vpc.main.id
+  traffic_type   = "ALL"
+  iam_role_arn   = aws_iam_role.vpc_flow_logs.arn
+}
+
+resource "aws_iam_role" "vpc_flow_logs" {
+  name = "vpc-flow-logs-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "vpc-flow-logs.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_default_security_group" "main_vpc_default" {
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = []
+    description = "No ingress allowed"
+  }
+
+  egress {
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = []
+    description = "No egress allowed"
+  }
+}
+}
+
 # Public Subnet
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidrs[0]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
   availability_zone       = data.aws_availability_zones.available.names[0]
   tags = {
     Name = "public-subnet"
@@ -85,22 +134,25 @@ resource "aws_security_group" "ec2_sg" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
+    description = "Allow SSH from VPC"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.vpc_cidr]
   }
   ingress {
+    description = "Allow HTTP from VPC"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.vpc_cidr]
   }
   egress {
+    description = "Allow all outbound traffic to VPC"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.vpc_cidr]
   }
   tags = {
     Name = "ec2-sg"
@@ -118,7 +170,18 @@ resource "aws_instance" "public" {
   instance_type               = each.value.instance_type
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.ec2_sg.id]
-  associate_public_ip_address = true
+  associate_public_ip_address = false
+  monitoring                  = true
+  ebs_optimized               = true
+  iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
+  metadata_options {
+    http_tokens = "required"
+    http_endpoint = "enabled"
+  }
+  root_block_device {
+    encrypted   = true
+    kms_key_id  = aws_kms_key.ebs_key.arn
+  }
   tags = {
     Name = each.value.name
   }

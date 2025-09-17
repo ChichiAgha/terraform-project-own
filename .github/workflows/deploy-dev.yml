@@ -2,7 +2,13 @@ name: Terraform Dev Deploy
 on:
   push:
     branches:
-      - develop    
+      - develop
+      - test
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
 jobs:
   terraform:
     runs-on: ubuntu-latest
