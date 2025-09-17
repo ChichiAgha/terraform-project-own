@@ -8,7 +8,6 @@ resource "aws_ebs_volume" "extra" {
   }
 }
 
-
 provider "aws" {
   region = var.region
 }

@@ -1,4 +1,3 @@
-
 output "ec2_instance_ids" {
   description = "IDs of created EC2 instances"
   value       = module.my_ec2.public_instance_ids

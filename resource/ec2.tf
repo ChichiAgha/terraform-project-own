@@ -2,7 +2,6 @@ locals {
   ec2_instance_type = "dev" == "prod" ? "t3.micro" : "t2.micro"
 }
 
-
 terraform {
   backend "s3" {
     bucket  = "my-terraform-state-bucket-12345-golder"
@@ -11,8 +10,6 @@ terraform {
     encrypt = true
   }
 }
-
-
 
 module "my_ec2" {
   source                 = "../module"
