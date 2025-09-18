@@ -36,7 +36,8 @@ resource "aws_vpc" "main" {
 
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   name = "/aws/vpc/flow-logs/main"
-  retention_in_days = 30
+  retention_in_days = 365
+  kms_key_id = aws_kms_key.cloudwatch_logs_key.arn
 }
 
 resource "aws_flow_log" "main_vpc_flow_log" {
@@ -201,8 +202,36 @@ resource "aws_instance" "private" {
   tags = {
     Name = "private-${count.index + 1}"
   }
-  #lifecycle {
-  #  prevent_destroy = true
-  #}
-  depends_on = [aws_instance.public]
+    monitoring                  = true
+    ebs_optimized               = true
+    iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
+    root_block_device {
+      encrypted = true
+      kms_key_id = aws_kms_key.ebs_key.arn
+    }
+    metadata_options {
+      http_tokens = "required"
+      http_endpoint = "enabled"
+    }
+    depends_on = [aws_instance.public]
 }
+
+  # IAM role for EC2 instance profile
+  resource "aws_iam_role" "ec2_instance_role" {
+    name = "ec2-instance-role"
+    assume_role_policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [{
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }]
+    })
+  }
+
+  resource "aws_iam_instance_profile" "ec2_profile" {
+    name = "ec2-instance-profile"
+    role = aws_iam_role.ec2_instance_role.name
+  }
