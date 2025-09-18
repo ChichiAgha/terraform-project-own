@@ -2,6 +2,9 @@ name: Terraform Prod Deploy
 on:
   release:
     types: [published]
+permissions:
+  contents: read
+  id-token: write
 jobs:
   terraform:
     runs-on: ubuntu-latest
